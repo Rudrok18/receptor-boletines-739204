@@ -82,15 +82,12 @@ jobs:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_EC2_SSH }}
+          envs: AWS_ECR_REGISTRY,AWS_ECR_NAME,IMAGE_TAG,AWS_REGION,AWS_ACCESS_KEY,AWS_SECRET_KEY,AWS_SESSION_TOKEN
           script: |
             export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY
             export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_KEY
             export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
             export AWS_REGION=$AWS_REGION
-      
-            export AWS_ECR_REGISTRY=$AWS_ECR_REGISTRY
-            export AWS_ECR_NAME=$AWS_ECR_NAME
-            export IMAGE_TAG=$IMAGE_TAG
       
             echo "Logging into ECR..."
             aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
@@ -104,6 +101,7 @@ jobs:
       
             echo "Running new container..."
             sudo docker run -d --name $AWS_ECR_NAME -p 3001:3001 $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
+        
       
       
       
