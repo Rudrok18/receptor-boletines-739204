@@ -83,7 +83,7 @@ jobs:
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_EC2_SSH }}
           script: |
-            sudo docker pull $AWS_ECR_REGISTRY/proyecto1:${IMAGE_TAG}
+            sudo docker pull $AWS_ECR_REGISTRY/$AWS_ECR_NAME:${IMAGE_TAG}
             sudo docker stop proyecto1 || true
             sudo docker rm proyecto1 || true
             sudo docker run -d --name proyecto1 -p 3001:3001 $AWS_ECR_REGISTRY/$AWS_ECR_NAME:${IMAGE_TAG}
