@@ -78,12 +78,14 @@ jobs:
 
       - name: Connect to EC2 and deploy
         uses: appleboy/ssh-action@v0.1.8
-        with: 
+        with:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_EC2_SSH }}
           script: |
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ECR_REGISTRY }}
             sudo docker pull ${{ env.AWS_ECR_REGISTRY }}/${{ env.AWS_ECR_NAME }}:${{ env.IMAGE_TAG }}
             sudo docker stop ${{ env.AWS_ECR_NAME }} || true
             sudo docker rm ${{ env.AWS_ECR_NAME }} || true
             sudo docker run -d --name ${{ env.AWS_ECR_NAME }} -p 3001:3001 ${{ env.AWS_ECR_REGISTRY }}/${{ env.AWS_ECR_NAME }}:${{ env.IMAGE_TAG }}
+      
