@@ -88,10 +88,10 @@ jobs:
             export AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }}
             export AWS_REGION=${{ secrets.AWS_REGION }}
       
-            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
-            sudo docker pull $AWS_ECR_REGISTRY/$AWS_ECR_NAME:${IMAGE_TAG}
-            sudo docker stop $AWS_ECR_NAME || true
-            sudo docker rm $AWS_ECR_NAME || true
-            sudo docker run -d --name $AWS_ECR_NAME -p 3001:3001 $AWS_ECR_REGISTRY/$AWS_ECR_NAME:${IMAGE_TAG}
+            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_REGISTRY }}
+            sudo docker pull ${{ secrets.AWS_ECR_REGISTRY }}/${{ secrets.AWS_ECR_NAME }}:${IMAGE_TAG}
+            sudo docker stop ${{ secrets.AWS_ECR_NAME }} || true
+            sudo docker rm ${{ secrets.AWS_ECR_NAME }} || true
+            sudo docker run -d --name ${{ secrets.AWS_ECR_NAME }} -p 3001:3001 ${{ secrets.AWS_ECR_REGISTRY }}/${{ secrets.AWS_ECR_NAME }}:${IMAGE_TAG}
       
       
