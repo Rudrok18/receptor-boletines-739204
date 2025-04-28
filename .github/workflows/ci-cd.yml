@@ -83,7 +83,7 @@ jobs:
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_EC2_SSH }}
           script: |
-            sudo docker pull $AWS_ECR_REGISTRY/$AWS_ECR_NAME:${IMAGE_TAG}
-            sudo docker stop $AWS_ECR_NAME || true
-            sudo docker rm $AWS_ECR_NAME || true
-            sudo docker run -d --name $AWS_ECR_NAME -p 3001:3001 $AWS_ECR_REGISTRY/$AWS_ECR_NAME:${IMAGE_TAG}
+            sudo docker pull ${{ env.AWS_ECR_REGISTRY }}/${{ env.AWS_ECR_NAME }}:${{ env.IMAGE_TAG }}
+            sudo docker stop ${{ env.AWS_ECR_NAME }} || true
+            sudo docker rm ${{ env.AWS_ECR_NAME }} || true
+            sudo docker run -d --name ${{ env.AWS_ECR_NAME }} -p 3001:3001 ${{ env.AWS_ECR_REGISTRY }}/${{ env.AWS_ECR_NAME }}:${{ env.IMAGE_TAG }}
