@@ -92,7 +92,7 @@ jobs:
           echo "AWS_ECR_NAME: $AWS_ECR_NAME"
           echo "Image Tag: $IMAGE_TAG"
 
-      - name: SSH into EC2 and deploy Docker container
+      - name: Run SSH command on EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
@@ -100,32 +100,64 @@ jobs:
           key: ${{ secrets.AWS_EC2_SSH }}
           script: |
             # Exportar las variables necesarias en la instancia EC2
-            export AWS_ECR_REGISTRY=$AWS_ECR_REGISTRY
-            export AWS_ECR_NAME=$AWS_ECR_NAME
-            export IMAGE_TAG=$IMAGE_TAG
-
+            export AWS_ECR_REGISTRY=${{ secrets.AWS_ECR_REGISTRY }}
+            export AWS_ECR_NAME=${{ secrets.AWS_ECR_NAME }}
+            export IMAGE_TAG=${{ secrets.IMAGE_TAG }}
+            
             # Mostrar los valores de las variables para depuración
             echo "ECR Registry: $AWS_ECR_REGISTRY"
             echo "ECR Name: $AWS_ECR_NAME"
             echo "Image Tag: $IMAGE_TAG"
-
+            
             # Comprobar si las variables están vacías
             if [ -z "$AWS_ECR_REGISTRY" ] || [ -z "$AWS_ECR_NAME" ] || [ -z "$IMAGE_TAG" ]; then
               echo "Error: Las variables necesarias no están definidas correctamente"
               exit 1
             fi
-
+            
             # Detener cualquier contenedor existente
             if [ "$(docker ps -q)" ]; then
               docker stop $(docker ps -q)
               docker rm $(docker ps -a -q)
             fi
-
+            
             # Descargar la última imagen de ECR
             docker pull $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
-
+            
             # Ejecutar el contenedor con la imagen más reciente
             docker run -d -p 80:80 $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
+          port: 22
+          sync: false
+          use_insecure_cipher: false
+          timeout: 30s
+          command_timeout: 10m
+          proxy_port: 22
+          proxy_timeout: 30s
+          proxy_use_insecure_cipher: false
+          script_stop: false
+          debug: false
+        env:
+          AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
+          AWS_SQS_NAME: ${{ secrets.AWS_SQS_NAME }}
+          AWS_SQS_URL: ${{ secrets.AWS_SQS_URL }}
+          AWS_MYSQL_HOST: ${{ secrets.AWS_MYSQL_HOST }}
+          AWS_MYSQL_USER: ${{ secrets.AWS_MYSQL_USER }}
+          AWS_MYSQL_PASSWORD: ${{ secrets.AWS_MYSQL_PASSWORD }}
+          AWS_MYSQL_DB: ${{ secrets.AWS_MYSQL_DB }}
+          AWS_SNS_ARN: ${{ secrets.AWS_SNS_ARN }}
+          AWS_ECR_NAME: ${{ secrets.AWS_ECR_NAME }}
+          AWS_ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
+          IMAGE_TAG: ${{ secrets.IMAGE_TAG }}
+          AWS_EC2_HOST: ${{ secrets.AWS_EC2_HOST }}
+          AWS_EC2_USER: ${{ secrets.AWS_EC2_USER }}
+          AWS_EC2_SSH: ${{ secrets.AWS_EC2_SSH }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
 
       - name: Check if the application is running
