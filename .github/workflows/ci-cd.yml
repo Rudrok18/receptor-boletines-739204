@@ -75,25 +75,25 @@ jobs:
       - name: Output Image URL
         run: |
           echo "Image URL: $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG"
-
-      - name: Deploy to EC2
-        run: |
-          echo "${{ secrets.AWS_EC2_SSH }}" > ec2_key.pem
-          chmod 600 ec2_key.pem
-
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ${{ secrets.AWS_EC2_USER }}@${{ secrets.AWS_EC2_HOST }} << 'EOF'
-            docker ps -q -f name=my-app | xargs -r docker stop
-
-            docker ps -a -q -f name=my-app | xargs -r docker rm
-
-            docker run -d --name my-app -p 3001:80 $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
-
-            docker ps -a
-            curl -f http://localhost || exit 1
-          EOF
-  
-      - name: Clean up EC2 SSH key
-        run: |
-          rm -f ec2_key.pem
       
+          - name: SSH into EC2 and deploy Docker container
+          uses: appleboy/ssh-action@v0.1.6
+          with:
+            host: ${{ secrets.AWS_EC2_HOST }}
+            username: ${{ secrets.AWS_EC2_USER }}
+            key: ${{ secrets.AWS_EC2_SSH }}
+            script: |
+              # Detener cualquier contenedor existente
+              docker stop $(docker ps -q)
+              docker rm $(docker ps -a -q)
+  
+              # Descargar la última imagen de ECR
+              docker pull $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
+  
+              # Ejecutar el contenedor con la imagen más reciente
+              docker run -d -p 80:80 $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
+  
+      - name: Check if the application is running
+        run: |
+          curl --silent --fail http://$AWS_EC2_HOST || exit 1
       
