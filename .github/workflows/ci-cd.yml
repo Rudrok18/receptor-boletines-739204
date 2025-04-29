@@ -76,22 +76,22 @@ jobs:
         run: |
           echo "Image URL: $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG"
       
-          - name: SSH into EC2 and deploy Docker container
-          uses: appleboy/ssh-action@v0.1.6
-          with:
-            host: ${{ secrets.AWS_EC2_HOST }}
-            username: ${{ secrets.AWS_EC2_USER }}
-            key: ${{ secrets.AWS_EC2_SSH }}
-            script: |
-              # Detener cualquier contenedor existente
-              docker stop $(docker ps -q)
-              docker rm $(docker ps -a -q)
-  
-              # Descargar la última imagen de ECR
-              docker pull $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
-  
-              # Ejecutar el contenedor con la imagen más reciente
-              docker run -d -p 80:80 $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
+      - name: SSH into EC2 and deploy Docker container
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USER }}
+          key: ${{ secrets.AWS_EC2_SSH }}
+          script: |
+            # Detener cualquier contenedor existente
+            docker stop $(docker ps -q)
+            docker rm $(docker ps -a -q)
+
+            # Descargar la última imagen de ECR
+            docker pull $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
+
+            # Ejecutar el contenedor con la imagen más reciente
+            docker run -d -p 80:80 $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
   
       - name: Check if the application is running
         run: |
