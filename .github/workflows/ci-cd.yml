@@ -76,6 +76,12 @@ jobs:
         run: |
           echo "Image URL: $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG"
       
+      - name: Output environment variables for debugging
+        run: |
+          echo "AWS_ECR_REGISTRY: $AWS_ECR_REGISTRY"
+          echo "AWS_ECR_NAME: $AWS_ECR_NAME"
+          echo "IMAGE_TAG: $IMAGE_TAG"
+  
       - name: SSH into EC2 and deploy Docker container
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -83,20 +89,29 @@ jobs:
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_EC2_SSH }}
           script: |
-
+            # Mostrar los valores de las variables para depuración
             echo "ECR Registry: $AWS_ECR_REGISTRY"
             echo "ECR Name: $AWS_ECR_NAME"
             echo "Image Tag: $IMAGE_TAG"
 
+            # Comprobar si las variables están vacías
+            if [ -z "$AWS_ECR_REGISTRY" ] || [ -z "$AWS_ECR_NAME" ] || [ -z "$IMAGE_TAG" ]; then
+              echo "Error: Las variables necesarias no están definidas correctamente"
+              exit 1
+            fi
+
+            # Detener cualquier contenedor existente
             if [ "$(docker ps -q)" ]; then
               docker stop $(docker ps -q)
               docker rm $(docker ps -a -q)
             fi
 
+            # Descargar la última imagen de ECR
             docker pull $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
 
+            # Ejecutar el contenedor con la imagen más reciente
             docker run -d -p 80:80 $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
-  
+
       - name: Check if the application is running
         run: |
           curl --silent --fail http://$AWS_EC2_HOST || exit 1
