@@ -76,32 +76,30 @@ jobs:
         run: |
           echo "Image URL: $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG"
 
-      - name: Connect to EC2 and deploy
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.AWS_EC2_HOST }}
-          username: ${{ secrets.AWS_EC2_USER }}
-          key: ${{ secrets.AWS_EC2_SSH }}
-          envs: AWS_ECR_REGISTRY,AWS_ECR_NAME,IMAGE_TAG,AWS_REGION,AWS_ACCESS_KEY,AWS_SECRET_KEY,AWS_SESSION_TOKEN
-          script: |
-            export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY
-            export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_KEY
-            export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
-            export AWS_REGION=$AWS_REGION
-      
-            echo "Logging into ECR..."
-            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
-      
-            echo "Pulling Docker image..."
-            sudo docker pull $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
-      
-            echo "Stopping old container..."
-            sudo docker stop $AWS_ECR_NAME || true
-            sudo docker rm $AWS_ECR_NAME || true
-      
-            echo "Running new container..."
-            sudo docker run -d --name $AWS_ECR_NAME -p 3001:3001 $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
-        
-      
+      - name: Deploy to EC2
+        run: |
+          # Guardamos la clave SSH en un archivo temporal
+          echo "${{ secrets.AWS_EC2_SSH }}" > ec2_key.pem
+          chmod 600 ec2_key.pem
+
+          # Conectamos a la instancia EC2 y desplegamos la aplicación
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ${{ secrets.AWS_EC2_USER }}@${{ secrets.AWS_EC2_HOST }} << 'EOF'
+            # Detenemos el contenedor existente si está corriendo
+            docker ps -q -f name=my-app | xargs -r docker stop
+
+            # Eliminamos el contenedor si existe
+            docker ps -a -q -f name=my-app | xargs -r docker rm
+
+            # Ejecutamos el nuevo contenedor con la imagen actual
+            docker run -d --name my-app -p 3001:3001 $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
+
+            # Verificamos si la aplicación está corriendo correctamente
+            docker ps -a
+            curl -f http://localhost || exit 1
+          EOF
+  
+      - name: Clean up EC2 SSH key
+        run: |
+          rm -f ec2_key.pem
       
       
