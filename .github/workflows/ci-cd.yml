@@ -76,26 +76,26 @@ jobs:
         run: |
           echo "Image URL: $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG"
       
-          - name: SSH into EC2 and deploy Docker container
-          uses: appleboy/ssh-action@v0.1.6
-          with:
-            host: ${{ secrets.AWS_EC2_HOST }}
-            username: ${{ secrets.AWS_EC2_USER }}
-            key: ${{ secrets.AWS_EC2_SSH }}
-            script: |
+      - name: SSH into EC2 and deploy Docker container
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USER }}
+          key: ${{ secrets.AWS_EC2_SSH }}
+          script: |
 
-              echo "ECR Registry: $AWS_ECR_REGISTRY"
-              echo "ECR Name: $AWS_ECR_NAME"
-              echo "Image Tag: $IMAGE_TAG"
-  
-              if [ "$(docker ps -q)" ]; then
-                docker stop $(docker ps -q)
-                docker rm $(docker ps -a -q)
-              fi
-  
-              docker pull $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
-  
-              docker run -d -p 80:80 $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
+            echo "ECR Registry: $AWS_ECR_REGISTRY"
+            echo "ECR Name: $AWS_ECR_NAME"
+            echo "Image Tag: $IMAGE_TAG"
+
+            if [ "$(docker ps -q)" ]; then
+              docker stop $(docker ps -q)
+              docker rm $(docker ps -a -q)
+            fi
+
+            docker pull $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
+
+            docker run -d -p 80:80 $AWS_ECR_REGISTRY/$AWS_ECR_NAME:$IMAGE_TAG
   
       - name: Check if the application is running
         run: |
